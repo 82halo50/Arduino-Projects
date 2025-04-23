@@ -1,0 +1,89 @@
+#include <dht.h>
+#include <LiquidCrystal.h>
+
+#define DHTPIN 7    // Digital pin connected to the DHT sensor
+#define DHTTYPE DHT11   // DHT 11
+#define BUTTON_PIN 6   // Digital pin connected to the push button
+
+dht DHT;
+
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+
+bool buttonState = false;  
+bool lastButtonState = false;
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 50;
+
+void setup() {
+  lcd.begin(16, 2);
+  pinMode(BUTTON_PIN, INPUT);
+   Serial.begin(9600);
+}
+
+void loop() {
+  int chk = DHT.read11(DHTPIN);
+  lcd.setCursor(0, 0); 
+  lcd.print("Press button for");
+  lcd.setCursor(0, 1);
+  lcd.print("measurement");
+
+  Serial.print("Temperature = ");
+  Serial.println(DHT.temperature);
+  Serial.print("Humidity = ");
+  Serial.println(DHT.humidity);
+
+  delay(2000); // Wait 2 seconds before reading again
+  // Check the state of the push button
+  int reading = digitalRead(BUTTON_PIN);
+  Serial.println(reading);
+  delay(2000);
+
+  if(reading == 1) {
+    Serial.print("Button has been pressed");
+    updateTemperature();
+  }
+
+}
+
+void updateTemperature() {
+  // Reading temperature or humidity takes about 250 milliseconds!
+  int chk = DHT.read11(DHTPIN);
+
+  // Check if any reads failed and exit early (to try again).
+  if (chk != DHTLIB_OK) {
+    lcd.clear();
+    lcd.print("Failed to read from DHT sensor!");
+    delay(2000);
+    return;
+  }
+
+   // Text to scroll
+  String text = "Taking your measurements";
+
+  // Scroll the text
+  for (int i = 0; i < text.length() + 16; i++) {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(text.substring(i, min(i + 16, text.length())));
+    delay(200); // Adjust the scrolling speed here
+  }
+  
+  // If no error, display temperature and humidity readings
+  for(int j=0; j < 5; j++) {
+      int chk = DHT.read11(DHTPIN);
+      delay(250);
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Temp: ");
+      lcd.print(DHT.temperature);
+      lcd.print("C");
+      lcd.setCursor(0, 1);
+      lcd.print("Humidity: ");
+      lcd.print(DHT.humidity);
+      lcd.print("%");
+      delay(2000);
+
+  }
+
+  lcd.clear();
+}
